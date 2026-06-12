@@ -30,16 +30,20 @@ uploaded_file = st.file_uploader("Choose your Tickers Excel File (.xlsx)", type=
 if uploaded_file:
     if st.session_state.watchlist is None:
         df = pd.read_excel(uploaded_file)
-        if 'Ticker' in df.columns:
-            # 3. Detects tickers and maps standard template baselines
+        
+        # This line forces all column names to be uppercase and stripped of spaces
+        df.columns = df.columns.astype(str).str.upper().str.strip()
+        
+        # Now we look for 'TICKER' no matter how you typed it in Excel
+        if 'TICKER' in df.columns:
             rows = []
             for idx, r in df.iterrows():
-                tkr = str(r['Ticker']).upper().strip()
+                tkr = str(r['TICKER']).upper().strip()
                 default_strike = 23500.0 if "NIFTY" in tkr else 50000.0
                 rows.append({"Select": False, "Ticker": tkr, "Strike": default_strike, "Type": "CE", "Current LTP": 0.0})
             st.session_state.watchlist = pd.DataFrame(rows)
         else:
-            st.error("Your excel must contain a column named exactly 'Ticker'")
+            st.error("Error: Could not find your stock column. Please make sure your Excel header row says 'Ticker'.")
 
 if st.session_state.watchlist is not None:
     st.subheader("💡 Interactive Options Watchlist Workspace")
